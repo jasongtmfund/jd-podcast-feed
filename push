@@ -1,0 +1,44 @@
+#!/bin/bash
+# Stage everything, commit with a message, push to origin in one shot.
+#
+# Usage:
+#     ./push "your commit message"
+#     ./push                       # opens $EDITOR for the message
+#
+# Safety:
+#   - Refuses to commit if no changes are staged
+#   - Refuses to commit if .env or any obvious secret file is staged
+#
+# Template from linkedin-relay. For a project that deploys to a remote host,
+# append a deploy-trigger block at the bottom (see linkedin-relay/push).
+
+set -e
+cd "$(dirname "$0")"
+
+# ---- Stage everything ----
+git add -A
+
+# ---- Safety: no secret files ----
+BAD=$(git diff --cached --name-only | grep -E '^(\.env$|.*\.key$|.*credentials.*|.*secret.*)' || true)
+if [[ -n "$BAD" ]]; then
+    echo "ERROR: refusing to commit — these look like secret files:"
+    echo "$BAD" | sed 's/^/  /'
+    echo "Unstage them with: git reset HEAD <file>"
+    exit 1
+fi
+
+# ---- Anything to commit? ----
+if git diff --cached --quiet; then
+    echo "Nothing to commit. Working tree clean."
+    exit 0
+fi
+
+# ---- Commit ----
+if [[ -n "${1:-}" ]]; then
+    git commit -m "$1"
+else
+    git commit   # opens $EDITOR
+fi
+
+# ---- Push ----
+git push
