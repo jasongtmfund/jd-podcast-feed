@@ -29,3 +29,11 @@ Public repo under jasongtmfund (Pages requires public on the free plan).
 - Files modified <15s ago are skipped (may still be downloading); the 60s
   StartInterval sweep retries them.
 - No secrets in this repo. Nothing here needs a token.
+
+## Push reliability
+
+The watcher checks git push exit status, retries 3x, and pushes any backlog it
+finds on every run — so a failed push self-heals on the next sweep instead of
+silently stranding an episode. Three straight failures post an alert to Slack
+(#gtm-prospecting) using SLACK_WEBHOOK_URL from ~/.config/jd-podcast-feed.env,
+which stays out of this public repo. Log: ~/Library/Logs/jd-podcast-feed.log
